@@ -1,0 +1,55 @@
+ssh -L 8888:localhost:8888 root@0.tcp.ngrok.io -p 11082
+
+kuchbhiblahblah
+
+cd /content/drive/My\ Drive/Works/Segmentation/Street/
+
+
+
+sudo apt install tmux
+
+cd /root/
+mkdir .kaggle
+cd /content/drive/My\ Drive/Works/Segmentation/Street/
+cp kaggle.json /root/.kaggle/
+pip3 install -r requirements.txt
+wandb login 9276c3faf809c3a9e42ac60cf7c7ee88416d05bf
+tmux
+
+# Data
+cd /content/
+mkdir data/
+cd data/
+wget https://zenodo.org/record/1154821/files/potsdam.zip?download=1
+mv potsdam.zip?download=1 potsdam.zip
+unzip potsdam.zip
+rm potsdam.zip
+wget https://zenodo.org/record/1154821/files/berlin.zip?download=1
+mv berlin.zip?download=1 berlin.zip
+unzip berlin.zip
+rm berlin.zip
+wget https://zenodo.org/record/1154821/files/chicago.zip?download=1
+mv chicago.zip?download=1 chicago.zip
+unzip chicago.zip
+rm chicago.zip
+wget https://zenodo.org/record/1154821/files/paris.zip?download=1
+mv paris.zip?download=1 paris.zip
+unzip paris.zip
+rm paris.zip
+wget https://zenodo.org/record/1154821/files/tokyo.zip?download=1
+mv tokyo.zip?download=1 tokyo.zip
+unzip tokyo.zip
+rm tokyo.zip
+wget https://zenodo.org/record/1154821/files/zurich.zip?download=1
+mv zurich.zip?download=1 zurich.zip
+unzip zurich.zip
+rm zurich.zip
+
+# Jupyter noetbook/lab for debugging (localhost:8888)
+jupyter notebook --no-browser --ip=127.0.0.1 --port=8888 --allow-root
+jupyter lab --no-browser --ip=127.0.0.1 --port=8888 --allow-root
+
+
+git remote add origin https://github.com/amritsaha607/CityScapes-Segmentation.git
+git config --global user.email amritsaha607@gmail.com
+
