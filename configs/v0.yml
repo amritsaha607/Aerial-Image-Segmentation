@@ -1,5 +1,18 @@
+batch_size: 1
+num_classes: 3
+n_epoch: 50
+
+train_annot: 'assets/train_sample.txt'
+val_annot: 'assets/val_sample.txt'
+
+n_segment_layers: 6
+
+optimizer: 'adam'
 lr: 1e-3
-weight_decay: 1e-4
-adam_eps: 1e-8
+weight_decay: 0
+adam_eps: 1
+amsgrad: False
 
 CHCEKPOINT_DIR: 'checkpoints/'
+
+use_augmentation: False

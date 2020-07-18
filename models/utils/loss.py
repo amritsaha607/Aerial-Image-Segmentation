@@ -14,11 +14,7 @@ class PixelLoss(nn.Module):
 			y 		: batch, 1, h, w
 		'''
 
-		y_pred = y_pred.view(-1, self.num_classes)
+		y_pred = y_pred.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes)
 		y = y.view(-1)
-		print(y_pred.shape, y.shape)
-		print(torch.unique(y))
-		print("is it?")
 		loss = F.cross_entropy(y_pred, y)
-		print("done..")
 		return loss
