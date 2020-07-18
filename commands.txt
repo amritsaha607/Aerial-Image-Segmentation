@@ -50,6 +50,6 @@ jupyter notebook --no-browser --ip=127.0.0.1 --port=8888 --allow-root
 jupyter lab --no-browser --ip=127.0.0.1 --port=8888 --allow-root
 
 
-git remote add origin https://github.com/amritsaha607/CityScapes-Segmentation.git
+git remote add origin https://github.com/amritsaha607/Aerial-Image-Segmentation.git
 git config --global user.email amritsaha607@gmail.com
 
