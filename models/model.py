@@ -21,8 +21,8 @@ class SegmentModel(nn.Module):
             self.downs.append(DeepLayerBlock(self.dim, flag='down'))
             if i!=n_layers-1:
                 self.ups.append(DeepLayerBlock(self.dim, flag='up'))
-            if i%2:
-                self.dropouts.append(Dropout(0.2))
+            # if i%2:
+            #     self.dropouts.append(Dropout(0.2))
 
         self.final = nn.Sequential(
             Conv2d(self.dim, 3, (1, 1)),

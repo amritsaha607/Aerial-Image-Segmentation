@@ -2,16 +2,16 @@ random_seed: 0
 
 batch_size: 1
 num_classes: 3
-n_epoch: 100
+n_epoch: 200
 
 train_annot: 'assets/train_sample.txt'
 val_annot: 'assets/val_sample.txt'
 
-n_segment_layers: 6
+n_segment_layers: 3
 
 optimizer: 'adam'
-lr: 1e-4
-weight_decay: 1e-2
+lr: 1e-3
+weight_decay: 1e-4
 adam_eps: 0
 amsgrad: True
 
