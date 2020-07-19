@@ -82,6 +82,7 @@ def showPredictions(imgs, masks, masks_pred, use_path=False, ret='arr', debug=Fa
             ax[i, 1].axis('off')
             ax[i, 2].imshow(mask_pred)
             ax[i, 2].axis('off')
+            plt.close()
 
         elif ret=='arr':
             fig, ax = plt.subplots(1, 3, figsize=size)
@@ -91,6 +92,7 @@ def showPredictions(imgs, masks, masks_pred, use_path=False, ret='arr', debug=Fa
             ax[1].axis('off')
             ax[2].imshow(mask_pred)
             ax[2].axis('off')
+            plt.close()
             figs.append(fig)
 
     if debug:
