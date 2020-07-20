@@ -69,6 +69,12 @@ criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights)
 if optimizer=='adam':
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, eps=adam_eps, amsgrad=amsgrad)
 
+scheduler = None
+if 'scheduler' in all_configs:
+    train_losses, val_losses = [], []
+    sch_factor = all_configs['scheduler']
+    lr_lambda = lambda epoch: sch_factor**epoch
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
 train_set = SegmentDataset(annot=train_annot, transform=transform, dim=(2048, 2048))
 train_loader = DataLoader(
@@ -111,6 +117,7 @@ def train(epoch, loader, optimizer, metrics=[]):
         y_pred = y_pred.detach().cpu()
         tot_loss += loss.item()
 
+        train_losses.append(loss.item())
         y_preds.append(y_pred)
         masks.append(mask)
 
@@ -119,7 +126,6 @@ def train(epoch, loader, optimizer, metrics=[]):
                 vis_img.append(image)
                 vis_mask.append(mask)
                 vis_y_pred.append(y_pred)
-
 
         n_arr = (50*(batch_idx+1))//n
         progress = 'Training : [{}>{}] ({}/{}) loss : {:.4f}, avg_loss : {:.4f}'.format(
@@ -174,6 +180,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
         loss = criterion(y_pred, mask)
         tot_loss += loss.item()
 
+        val_losses.append(loss.item())
         y_preds.append(y_pred)
         masks.append(mask)
 
@@ -182,7 +189,6 @@ def validate(epoch, loader, optimizer, metrics=[]):
                 vis_img.append(image)
                 vis_mask.append(mask)
                 vis_y_pred.append(y_pred)
-
 
         n_arr = (50*(batch_idx+1))//n
         progress = 'Validation : [{}>{}] ({}/{}) loss : {:.4f}, avg_loss : {:.4f}'.format(
@@ -247,11 +253,17 @@ def run():
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'pred'])
-        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'pred'])
+        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'pred'])
+        if scheduler:
+            if epoch>5:
+                # Apply lr scheduler if training loss isn't decreasing since last 4 epochs
+                if train_losses[-1]>=train_losses[-4]:
+                    print("applying scheduler")
+                    scheduler.step()
         logg = {}
         logg.update(logg_train)
-        logg.update(logg_val)
+        # logg.update(logg_val)
         wandb.log(logg)
 
 
