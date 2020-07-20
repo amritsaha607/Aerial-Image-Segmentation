@@ -49,6 +49,9 @@ amsgrad = all_configs['amsgrad']
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
 use_augmentation = all_configs['use_augmentation']
+loss_weights = None
+if 'loss_weights' in all_configs:
+    loss_weights = torch.FloatTensor(all_configs['loss_weights'])
 
 if not os.path.exists(ckpt_dir):
     os.makedirs(ckpt_dir)
@@ -61,7 +64,7 @@ torch.cuda.manual_seed(random_seed)
 
 
 model = SegmentModel(num_features=3, n_layers=n_segment_layers).cuda()
-criterion = PixelLoss(num_classes=num_classes)
+criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights)
 
 if optimizer=='adam':
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, eps=adam_eps, amsgrad=amsgrad)
@@ -151,7 +154,7 @@ def train(epoch, loader, optimizer, metrics=[]):
             use_path=False, ret='fig', debug=False, size=(8, 8)
         )
         logg.update({'train_prediction': wandb.Image(pred_fig)})
-    
+
     return logg
 
 
@@ -239,12 +242,13 @@ def run():
     config.amsgrad = amsgrad
     config.CHCEKPOINT_DIR = CHCEKPOINT_DIR
     config.use_augmentation = use_augmentation
+    config.loss_weights = loss_weights
     config.log_interval = 1
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
         logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'pred'])
-        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'pred'])
+        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'pred'])
         logg = {}
         logg.update(logg_train)
         logg.update(logg_val)
