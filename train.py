@@ -157,7 +157,8 @@ def train(epoch, loader, optimizer, metrics=[]):
         vis_mask_pred = predict(None, None, use_cache=True, params=(vis_y_pred, False))
         pred_fig = showPredictions(
             vis_img, vis_mask, vis_mask_pred, 
-            use_path=False, ret='fig', debug=False, size=(8, 8)
+            use_path=False, ret='fig', debug=False, size='auto',
+            getMatch=True,
         )
         logg.update({'train_prediction': wandb.Image(pred_fig)})
 
@@ -220,7 +221,8 @@ def validate(epoch, loader, optimizer, metrics=[]):
         vis_mask_pred = predict(None, None, use_cache=True, params=(vis_y_pred, False))
         pred_fig = showPredictions(
             vis_img, vis_mask, vis_mask_pred, 
-            use_path=False, ret='fig', debug=False, size=(8, 8)
+            use_path=False, ret='fig', debug=False, size='auto',
+            getMatch=True,
         )
         logg.update({'val_prediction': wandb.Image(pred_fig)})
 

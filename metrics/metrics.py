@@ -20,7 +20,7 @@ def pixelAccuracy(img1, img2):
     return n_match/n
 
 
-def pixelConfusion(img1, img2, heatmap=None):
+def pixelConfusion(img1, img2, heatmap=None, debug=False):
     '''
         Calculates pixelwise confusion matrix between 2 images
     '''
@@ -34,17 +34,18 @@ def pixelConfusion(img1, img2, heatmap=None):
         conf = [list(val.values()) for val in conf.values()]
         if heatmap=='image':
             df_cm = pd.DataFrame(conf, index=index2name.values(), columns=index2name.values())
-            fig = plt.figure(figsize=(8, 8))
+            conf = plt.figure(figsize=(8, 8))
             sn.heatmap(df_cm, annot=True)
             plt.close()
-            conf = wandb.Image(fig)
+            if not debug:
+                conf = wandb.Image(conf)
         else:
             conf = wandb.plots.HeatMap(index2name.values(), index2name.values(), conf, show_text=True)
 
     return conf
 
 
-def gatherMetrics(params, metrics=['acc'], mode='val'):
+def gatherMetrics(params, metrics=['acc'], mode='val', debug=False):
 
     mask, y_pred = params
     mask_pred = predict(None, None, use_cache=True, params=(y_pred, False))
@@ -59,6 +60,6 @@ def gatherMetrics(params, metrics=['acc'], mode='val'):
             heatmap = True
         else:
             heatmap = 'image'
-        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, heatmap=heatmap)
+        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, heatmap=heatmap, debug=debug)
 
     return logg
