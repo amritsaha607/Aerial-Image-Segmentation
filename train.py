@@ -70,8 +70,8 @@ if optimizer=='adam':
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, eps=adam_eps, amsgrad=amsgrad)
 
 scheduler = None
+train_losses, val_losses = [], []
 if 'scheduler' in all_configs:
-    train_losses, val_losses = [], []
     sch_factor = all_configs['scheduler']
     lr_lambda = lambda epoch: sch_factor**epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
