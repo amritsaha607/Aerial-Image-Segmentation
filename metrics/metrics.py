@@ -1,5 +1,8 @@
 import wandb
 import numpy as np
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
 from collections import defaultdict
 # import time
 
@@ -17,7 +20,7 @@ def pixelAccuracy(img1, img2):
     return n_match/n
 
 
-def pixelConfusion(img1, img2, heatmap=False):
+def pixelConfusion(img1, img2, heatmap=None):
     '''
         Calculates pixelwise confusion matrix between 2 images
     '''
@@ -29,10 +32,16 @@ def pixelConfusion(img1, img2, heatmap=False):
 
     if heatmap:
         conf = [list(val.values()) for val in conf.values()]
-        conf = wandb.plots.HeatMap(index2name.keys(), index2name.keys(), conf, show_text=True)
+        if heatmap=='image':
+            df_cm = pd.DataFrame(conf, index=index2name.values(), columns=index2name.values())
+            fig = plt.figure(figsize=(8, 8))
+            sn.heatmap(df_cm, annot=True)
+            plt.close()
+            conf = wandb.Image(fig)
+        else:
+            conf = wandb.plots.HeatMap(index2name.values(), index2name.values(), conf, show_text=True)
 
     return conf
-        
 
 
 def gatherMetrics(params, metrics=['acc'], mode='val'):
@@ -43,9 +52,13 @@ def gatherMetrics(params, metrics=['acc'], mode='val'):
     logg = {}
 
     if 'acc' in metrics:
-        logg['{}_acc'.format(mode)] = pixelAccuracy(mask_pred, mask)
+        logg['{}_acc'.format(mode)] = pixelAccuracy(mask, mask_pred)
 
     if 'conf' in metrics:
-        logg['{}_conf'.format(mode)] = pixelConfusion(mask_pred, mask)
+        if mode=='eval':
+            heatmap = True
+        else:
+            heatmap = 'image'
+        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, heatmap=heatmap)
 
     return logg
