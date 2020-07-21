@@ -22,7 +22,7 @@ from metrics.metrics import pixelAccuracy, gatherMetrics
 from metrics.pred import predict, getMask
 from utils.vis import showPredictions
 from utils.decorators import timer
-
+from utils.parameters import *
 
 
 parser = argparse.ArgumentParser()
@@ -30,13 +30,24 @@ parser.add_argument('--version', type=str, default='v0', help='Version of experi
 args = parser.parse_args()
 
 version = args.version
-cfg_path = 'configs/{}.yml'.format(version)
+cfg_path = 'configs/{}.yml'.format(version.replace('_', '/'))
 all_configs = yaml.safe_load(open(cfg_path))
 
 
 random_seed = int(all_configs['random_seed'])
 batch_size = int(all_configs['batch_size'])
 num_classes = int(all_configs['num_classes'])
+if num_classes==2:
+    ftr = all_configs['ftr']
+    if ftr.lower()=='street':
+        index2name = index2name_street
+        color2index = color2index_street
+    elif ftr.lower()=='building':
+        index2name = index2name_building
+        color2index = color2index_building
+    else:
+        raise ValueError("Unknown feature found - {}".format(ftr))
+
 n_epoch = int(all_configs['n_epoch'])
 train_annot = all_configs['train_annot']
 val_annot = all_configs['val_annot']
@@ -63,11 +74,14 @@ torch.manual_seed(random_seed)
 torch.cuda.manual_seed(random_seed)
 
 
-model = SegmentModel(num_features=3, n_layers=n_segment_layers).cuda()
+model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
 criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights)
 
 if optimizer=='adam':
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay, eps=adam_eps, amsgrad=amsgrad)
+    optimizer = torch.optim.Adam(
+        model.parameters(), 
+        lr=lr, weight_decay=weight_decay, eps=adam_eps, amsgrad=amsgrad
+    )
 
 scheduler = None
 train_losses, val_losses = [], []
@@ -76,14 +90,24 @@ if 'scheduler' in all_configs:
     lr_lambda = lambda epoch: sch_factor**epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
-train_set = SegmentDataset(annot=train_annot, transform=transform, dim=(2048, 2048))
+train_set = SegmentDataset(
+    annot=train_annot, 
+    transform=transform, 
+    dim=(2048, 2048), 
+    c2i=color2index
+)
 train_loader = DataLoader(
     train_set,
     batch_size=batch_size,
     num_workers=8,
     collate_fn=collate,
 )
-val_set = SegmentDataset(annot=val_annot, transform=transform, dim=(2048, 2048))
+val_set = SegmentDataset(
+    annot=val_annot, 
+    transform=transform, 
+    dim=(2048, 2048), 
+    c2i=color2index
+)
 val_loader = DataLoader(
     val_set,
     batch_size=batch_size,
@@ -146,6 +170,7 @@ def train(epoch, loader, optimizer, metrics=[]):
         params=(masks, y_preds),
         metrics=metrics,
         mode='train',
+        i2n=index2name,
     )
     logg.update(logg_metrics)
 
@@ -210,6 +235,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
         params=(masks, y_preds),
         metrics=metrics,
         mode='val',
+        i2n=index2name,
     )
     logg.update(logg_metrics)
 
@@ -231,7 +257,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
 
 def run():
 
-    run_name = 'overfit_train_{}'.format(version)
+    run_name = 'OF_train_{}'.format(version)
     wandb.init(name=run_name, project="Street Segmentation", dir='/content/wandb/')
     wandb.watch(model, log='all')
     config = wandb.config
@@ -239,6 +265,8 @@ def run():
     config.version = version
     config.batch_size = batch_size
     config.num_classes = num_classes
+    if config.num_classes==2:
+        config.feature = ftr
     config.n_epoch = n_epoch
     config.train_annot = train_annot
     config.val_annot = val_annot

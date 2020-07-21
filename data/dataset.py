@@ -8,14 +8,16 @@ from PIL import Image
 import numpy as np
 
 from utils.utils import processMask
+from utils.parameters import color2index
 
 
 class SegmentDataset(Dataset):
 
-    def __init__(self, annot='assets/sample.txt', transform=None, dim=(2048, 2048)):
+    def __init__(self, annot='assets/sample.txt', transform=None, dim=(2048, 2048), c2i=color2index):
         self.annot = annot
         self.transform = transform
         self.dim = dim
+        self.c2i = c2i
         if isinstance(self.dim, int):
             self.dim = (dim, dim)
         lines = open(annot, 'r').read().strip().split('\n')
@@ -32,12 +34,7 @@ class SegmentDataset(Dataset):
         mask_path = self.mask_paths[idx]
         image = Image.open(image_path)
         mask = cv2.imread(mask_path)
-        # print("b4 : ", np.unique(mask))
-        mask = processMask(mask, use_path=False, bake_anomaly=True, ret='image')
-        # print(np.unique(np.array(mask)))
-
-        # print(np.array(mask).shape)
-        # print(np.unique(np.array(mask)))
+        mask = processMask(mask, use_path=False, bake_anomaly=True, ret='image', color2index=self.c2i)
 
         if self.transform:
             image, mask = self.transform(image, mask, dim=self.dim)

@@ -4,7 +4,7 @@ from .parameters import color2index
 import numpy as np
 import cv2
 
-def processMask(mask, use_path=False, bake_anomaly=True, ret='image'):
+def processMask(mask, color2index=color2index, use_path=False, bake_anomaly=True, ret='image'):
     '''
         Removes all anomalies from the mask
         Args:

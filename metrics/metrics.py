@@ -20,15 +20,15 @@ def pixelAccuracy(img1, img2):
     return n_match/n
 
 
-def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=False):
+def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=False, i2n=index2name):
     '''
         Calculates pixelwise confusion matrix between 2 images
     '''
 
     conf = defaultdict(dict)
-    for key1, val1 in index2name.items():
+    for key1, val1 in i2n.items():
         mask1 = img1==key1
-        conf[val1] = {val2: np.count_nonzero(mask1 & (img2==key2)) for key2, val2 in index2name.items()}
+        conf[val1] = {val2: np.count_nonzero(mask1 & (img2==key2)) for key2, val2 in i2n.items()}
 
     tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     prec, rec, acc = defaultdict(float), defaultdict(float), defaultdict(float)
@@ -53,14 +53,14 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     if heatmap:
         conf = [list(val.values()) for val in conf.values()]
         if heatmap=='image':
-            df_cm = pd.DataFrame(conf, index=index2name.values(), columns=index2name.values())
+            df_cm = pd.DataFrame(conf, index=i2n.values(), columns=i2n.values())
             conf = plt.figure(figsize=(8, 8))
             sn.heatmap(df_cm, annot=True)
             plt.close()
             if not debug:
                 conf = wandb.Image(conf)
         else:
-            conf = wandb.plots.HeatMap(index2name.values(), index2name.values(), conf, show_text=True)
+            conf = wandb.plots.HeatMap(i2n.values(), i2n.values(), conf, show_text=True)
 
     if splits:
         ret_dict.update(prec)
@@ -71,7 +71,7 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     return conf
 
 
-def gatherMetrics(params, metrics=['acc'], mode='val', debug=False):
+def gatherMetrics(params, metrics=['acc'], mode='val', debug=False, i2n=index2name):
 
     mask, y_pred = params
     mask_pred = predict(None, None, use_cache=True, params=(y_pred, False))
@@ -89,10 +89,10 @@ def gatherMetrics(params, metrics=['acc'], mode='val', debug=False):
 
         splits = False
         if 'splits' in metrics:
-            conf, ret_dict = pixelConfusion(mask, mask_pred, mode=mode, splits=True, heatmap=heatmap, debug=debug)
+            conf, ret_dict = pixelConfusion(mask, mask_pred, mode=mode, splits=True, heatmap=heatmap, debug=debug, i2n=i2n)
             logg.update(ret_dict)
         else:
-            conf = pixelConfusion(mask, mask_pred, mode=mode, splits=False, heatmap=heatmap, debug=debug)
+            conf = pixelConfusion(mask, mask_pred, mode=mode, splits=False, heatmap=heatmap, debug=debug, i2n=i2n)
 
         logg['{}_conf'.format(mode)] = conf
 
