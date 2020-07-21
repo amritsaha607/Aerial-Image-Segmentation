@@ -45,9 +45,9 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
             fn['{}_fn_{}'.format(mode, key)] = fn_
             tn['{}_tn_{}'.format(mode, key)] = tn_
 
-            prec['{}_prec_{}'.format(mode, key)] = tp_/(tp_+fp_)
-            rec['{}_rec_{}'.format(mode, key)] = tp_/(tp_+fn_)
-            acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/(tp_+fp_+tn_+fn_)
+            prec['{}_prec_{}'.format(mode, key)] = tp_/(tp_+fp_) if (tp_+fp_)>0 else 0
+            rec['{}_rec_{}'.format(mode, key)] = tp_/(tp_+fn_) if (tp_+fn_)>0 else 0
+            acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/tot if tot>0 else 0
 
     if heatmap:
         conf = [list(val.values()) for val in conf.values()]
