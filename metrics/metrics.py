@@ -33,7 +33,7 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     if splits:
         tot = np.prod(img1.shape)
-        for key in conf.keys():a
+        for key in conf.keys():
             tp_ = conf[key][key]
             fp_ = sum([conf[k][key] for k in conf.keys() if k!=key])
             fn_ = sum([conf[key][k] for k in conf.keys() if k!=key])
