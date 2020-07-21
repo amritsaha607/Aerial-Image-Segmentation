@@ -1,0 +1,27 @@
+# Decrease Weight ratio = 1/(4.78+1.88) : 1/0.9 = 0.9 : 6.66 = 1:7.4
+# Decreased : 1 : 4
+
+random_seed: 0
+
+batch_size: 1
+num_classes: 2
+ftr: 'Street'
+n_epoch: 200
+
+train_annot: 'assets/train_sample.txt'
+val_annot: 'assets/val_sample.txt'
+
+n_segment_layers: 5
+
+optimizer: 'adam'
+lr: 1e-3
+weight_decay: 1e-4
+adam_eps: 0
+amsgrad: True
+
+loss_weights: [1, 4]
+# scheduler: 0.98
+
+CHCEKPOINT_DIR: 'checkpoints/'
+
+use_augmentation: False
