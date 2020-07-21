@@ -1,0 +1,31 @@
+# Adjusting weight w.r.t. #occurences
+# n_background = 4.3e7 + 4.8e6 = 4.78e7
+# n_building = 1.2e7 + 6.8e6 = 1.88e7
+# n_street = 8.2e6 + 8.1e5 = 9.01e6 = 0.901e7
+# Ratio = 4.78 : 1.88 : 0.9
+# Weight ratio should be : 
+#   1/4.78 : 1/1.88 : 1/0.9 = 1.692 : 4.302 : 8.9864 = 1 : 2.54 : 5.31
+
+random_seed: 0
+
+batch_size: 1
+num_classes: 3
+n_epoch: 200
+
+train_annot: 'assets/train_sample.txt'
+val_annot: 'assets/val_sample.txt'
+
+n_segment_layers: 5
+
+optimizer: 'adam'
+lr: 1e-3
+weight_decay: 1e-4
+adam_eps: 0
+amsgrad: True
+
+loss_weights: [1, 2.54, 5.31]
+# scheduler: 0.98
+
+CHCEKPOINT_DIR: 'checkpoints/'
+
+use_augmentation: False
