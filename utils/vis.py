@@ -1,6 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib
+from utils.parameters import COLORS
 
 def showImageMask(img, mask, use_path=True, debug=False):
 
@@ -77,10 +78,10 @@ def showPredictions(imgs, masks, masks_pred, use_path=False, ret='arr', debug=Fa
             ax[0].imshow(img)
             ax[0].set_title('Image')
             ax[0].axis('off')
-            ax[1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[1].set_title('Mask')
             ax[1].axis('off')
-            ax[2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[2].set_title('Pred Mask')
             ax[2].axis('off')
             if getMatch:
@@ -93,10 +94,10 @@ def showPredictions(imgs, masks, masks_pred, use_path=False, ret='arr', debug=Fa
             ax[i, 0].imshow(img)
             ax[i, 0].set_title('Image')
             ax[i, 0].axis('off')
-            ax[i, 1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[i, 1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[i, 1].set_title('Mask')
             ax[i, 1].axis('off')
-            ax[i, 2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[i, 2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[i, 2].set_title('Pred Mask')
             ax[i, 2].axis('off')
             if getMatch:
@@ -110,10 +111,10 @@ def showPredictions(imgs, masks, masks_pred, use_path=False, ret='arr', debug=Fa
             ax[0].imshow(img)
             ax[0].set_title('Image')
             ax[0].axis('off')
-            ax[1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[1].imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[1].set_title('Mask')
             ax[1].axis('off')
-            ax[2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(colors))
+            ax[2].imshow(mask_pred, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS))
             ax[2].set_title('Pred Mask')
             ax[2].axis('off')
             if getMatch:

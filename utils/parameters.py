@@ -35,4 +35,4 @@ color2index_building = {
 	(255,   0,   0) : 0,
 }
 
-colors = ['white', 'green', 'red']
+COLORS = ['white', 'green', 'red']
