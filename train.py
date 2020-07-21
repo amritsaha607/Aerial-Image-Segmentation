@@ -255,8 +255,8 @@ def run():
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'pred'])
-        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'splits', 'pred'])
+        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'splits', 'pred'])
         if scheduler:
             if epoch>5:
                 # Apply lr scheduler if training loss isn't decreasing since last 4 epochs

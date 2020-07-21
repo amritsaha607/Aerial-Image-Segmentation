@@ -20,7 +20,7 @@ def pixelAccuracy(img1, img2):
     return n_match/n
 
 
-def pixelConfusion(img1, img2, heatmap=None, debug=False):
+def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=False):
     '''
         Calculates pixelwise confusion matrix between 2 images
     '''
@@ -29,6 +29,24 @@ def pixelConfusion(img1, img2, heatmap=None, debug=False):
     for key1, val1 in index2name.items():
         mask1 = img1==key1
         conf[val1] = {val2: np.count_nonzero(mask1 & (img2==key2)) for key2, val2 in index2name.items()}
+
+    tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
+    if splits:
+        tot = np.prod(img1.shape)
+        for key in conf.keys():a
+            tp_ = conf[key][key]
+            fp_ = sum([conf[k][key] for k in conf.keys() if k!=key])
+            fn_ = sum([conf[key][k] for k in conf.keys() if k!=key])
+            tn_ = tot - tp_ - fp_ - fn_
+
+            tp['{}_tp_{}'.format(mode, key)] = tp_
+            fp['{}_fp_{}'.format(mode, key)] = fp_
+            fn['{}_fn_{}'.format(mode, key)] = fn_
+            tn['{}_tn_{}'.format(mode, key)] = tn_
+
+            prec['{}_prec_{}'.format(mode, key)] = tp_/(tp_+fp_)
+            rec['{}_rec_{}'.format(mode, key)] = tp_/(tp_+fn_)
+            acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/(tp_+fp_+tn_+fn_)
 
     if heatmap:
         conf = [list(val.values()) for val in conf.values()]
@@ -41,6 +59,10 @@ def pixelConfusion(img1, img2, heatmap=None, debug=False):
                 conf = wandb.Image(conf)
         else:
             conf = wandb.plots.HeatMap(index2name.values(), index2name.values(), conf, show_text=True)
+
+    if splits:
+        conf.update(prec)
+        conf.update(rec)
 
     return conf
 
@@ -60,6 +82,11 @@ def gatherMetrics(params, metrics=['acc'], mode='val', debug=False):
             heatmap = True
         else:
             heatmap = 'image'
-        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, heatmap=heatmap, debug=debug)
+
+        splits = False
+        if 'splits' in metrics:
+            splits = True
+
+        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, mode=mode, splits=splits, heatmap=heatmap, debug=debug)
 
     return logg
