@@ -33,6 +33,7 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     prec, rec, acc = defaultdict(float), defaultdict(float), defaultdict(float)
     if splits:
+        ret_dict = {}
         tot = np.prod(img1.shape)
         for key in conf.keys():
             tp_ = conf[key][key]
@@ -62,9 +63,10 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
             conf = wandb.plots.HeatMap(index2name.values(), index2name.values(), conf, show_text=True)
 
     if splits:
-        conf.update(prec)
-        conf.update(rec)
-        conf.update(acc)
+        ret_dict.update(prec)
+        ret_dict.update(rec)
+        ret_dict.update(acc)
+        return conf, ret_dict
 
     return conf
 
@@ -87,8 +89,11 @@ def gatherMetrics(params, metrics=['acc'], mode='val', debug=False):
 
         splits = False
         if 'splits' in metrics:
-            splits = True
+            conf, ret_dict = pixelConfusion(mask, mask_pred, mode=mode, splits=True, heatmap=heatmap, debug=debug)
+            logg.update(ret_dict)
+        else:
+            conf = pixelConfusion(mask, mask_pred, mode=mode, splits=False, heatmap=heatmap, debug=debug)
 
-        logg['{}_conf'.format(mode)] = pixelConfusion(mask, mask_pred, mode=mode, splits=splits, heatmap=heatmap, debug=debug)
+        logg['{}_conf'.format(mode)] = conf
 
     return logg
