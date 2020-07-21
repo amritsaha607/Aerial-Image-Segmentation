@@ -31,6 +31,7 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
         conf[val1] = {val2: np.count_nonzero(mask1 & (img2==key2)) for key2, val2 in index2name.items()}
 
     tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
+    prec, rec, acc = defaultdict(float), defaultdict(float), defaultdict(float)
     if splits:
         tot = np.prod(img1.shape)
         for key in conf.keys():
@@ -63,6 +64,7 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     if splits:
         conf.update(prec)
         conf.update(rec)
+        conf.update(acc)
 
     return conf
 
