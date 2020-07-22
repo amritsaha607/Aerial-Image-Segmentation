@@ -1,0 +1,27 @@
+# v6 with lr=1e-4
+
+random_seed: 0
+
+batch_size: 1
+num_classes: 2
+ftr: 'Street'
+n_epoch: 200
+
+train_annot: 'assets/train_sample.txt'
+val_annot: 'assets/val_sample.txt'
+
+n_segment_layers: 5
+
+optimizer: 'adam'
+lr: 1e-4
+weight_decay: 1e-4
+adam_eps: 0
+amsgrad: True
+
+hnm: 2
+loss_weights: [1, 1]
+# scheduler: 0.98
+
+CHCEKPOINT_DIR: 'checkpoints/'
+
+use_augmentation: False
