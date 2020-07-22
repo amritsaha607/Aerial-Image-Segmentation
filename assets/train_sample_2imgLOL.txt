@@ -1,0 +1,2 @@
+/content/data/potsdam/top_potsdam_7_8_image.png	/content/data/potsdam/top_potsdam_7_8_labels.png
+/content/data/potsdam/top_potsdam_7_10_image.png	/content/data/potsdam/top_potsdam_7_10_labels.png
