@@ -30,7 +30,7 @@ parser.add_argument('--version', type=str, default='v0', help='Version of experi
 args = parser.parse_args()
 
 version = args.version
-cfg_path = 'configs/{}.yml'.format(version.replace('_', '/'))
+cfg_path = 'configs/{}.yml'.format(version.replace('_', '/').replace('-', '/'))
 all_configs = yaml.safe_load(open(cfg_path))
 
 
@@ -60,7 +60,11 @@ amsgrad = all_configs['amsgrad']
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
 use_augmentation = all_configs['use_augmentation']
-loss_weights = None
+loss_weights, hnm = None, None
+
+if 'hnm' in all_configs:
+    hnm = float(all_configs['hnm'])
+
 if 'loss_weights' in all_configs:
     loss_weights = torch.FloatTensor(all_configs['loss_weights'])
 
@@ -75,7 +79,7 @@ torch.cuda.manual_seed(random_seed)
 
 
 model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
-criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights)
+criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights, hnm=hnm)
 
 if optimizer=='adam':
     optimizer = torch.optim.Adam(
@@ -278,12 +282,13 @@ def run():
     config.amsgrad = amsgrad
     config.CHCEKPOINT_DIR = CHCEKPOINT_DIR
     config.use_augmentation = use_augmentation
+    config.hnm = hnm
     config.loss_weights = loss_weights
     config.log_interval = 1
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'splits', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
         # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'splits', 'pred'])
         if scheduler:
             if epoch>5:
