@@ -8,6 +8,7 @@ import wandb
 import random
 import time
 
+import math
 import numpy as np
 import torch
 import torch.nn as nn
@@ -59,6 +60,7 @@ adam_eps = float(all_configs['adam_eps'])
 amsgrad = all_configs['amsgrad']
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
+vis_batch = all_configs['vis_batch'] if ('vis_batch' in all_configs) else None 
 use_augmentation = all_configs['use_augmentation']
 loss_weights, hnm = None, None
 
@@ -119,7 +121,7 @@ val_loader = DataLoader(
     collate_fn=collate,
 )
 
-n_batch = 2
+n_batch = vis_batch
 pred_fig_indices = list(range(0, len(val_loader)-1))
 random.shuffle(pred_fig_indices)
 pred_fig_indices = pred_fig_indices[:n_batch]
@@ -128,7 +130,7 @@ pred_fig_indices = pred_fig_indices[:n_batch]
 @timer
 def train(epoch, loader, optimizer, metrics=[]):
     n = len(loader)
-    tot_loss = 0.0
+    tot_loss, loss_count = 0.0, 0
     masks, mask_preds = [], []
     y_preds = []
     if 'pred' in metrics:
@@ -143,11 +145,14 @@ def train(epoch, loader, optimizer, metrics=[]):
         optimizer.step()
 
         y_pred = y_pred.detach().cpu()
-        tot_loss += loss.item()
+        if not math.isnan(loss.item()):
+            tot_loss += loss.item()
+            loss_count += 1
 
         train_losses.append(loss.item())
-        y_preds.append(y_pred)
-        masks.append(mask)
+        if (('pred' in metrics) and len(metrics)>1) or (not('pred' in metrics) and len(metrics)):
+            y_preds.append(y_pred)
+            masks.append(mask)
 
         if 'pred' in metrics:
             if batch_idx in pred_fig_indices:
@@ -164,19 +169,20 @@ def train(epoch, loader, optimizer, metrics=[]):
 
     print("\n")
     logg = {
-        'training_loss': tot_loss/n,
+        'training_loss': tot_loss/(n-loss_count),
     }
 
     # Metrics
-    masks = torch.cat(masks, dim=0)
-    y_preds = torch.cat(y_preds, dim=0)
-    logg_metrics = gatherMetrics(
-        params=(masks, y_preds),
-        metrics=metrics,
-        mode='train',
-        i2n=index2name,
-    )
-    logg.update(logg_metrics)
+    if (('pred' in metrics) and len(metrics)>1) or (not('pred' in metrics) and len(metrics)):
+        masks = torch.cat(masks, dim=0)
+        y_preds = torch.cat(y_preds, dim=0)
+        logg_metrics = gatherMetrics(
+            params=(masks, y_preds),
+            metrics=metrics,
+            mode='train',
+            i2n=index2name,
+        )
+        logg.update(logg_metrics)
 
     # Visualizations
     if 'pred' in metrics:
@@ -197,7 +203,7 @@ def train(epoch, loader, optimizer, metrics=[]):
 @timer
 def validate(epoch, loader, optimizer, metrics=[]):
     n = len(loader)
-    tot_loss = 0.0
+    tot_loss, loss_count = 0.0, 0
     masks, mask_preds = [], []
     y_preds = []
     if 'pred' in metrics:
@@ -208,7 +214,9 @@ def validate(epoch, loader, optimizer, metrics=[]):
         y_pred = model(image.cuda()).detach().cpu()
         image = image.detach().cpu()
         loss = criterion(y_pred, mask)
-        tot_loss += loss.item()
+        if not math.isnan(loss.item()):
+            tot_loss += loss.item()
+            loss_count += 1
 
         val_losses.append(loss.item())
         y_preds.append(y_pred)
@@ -229,7 +237,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
 
     print("\n")
     logg = {
-        'val_loss': tot_loss/n,
+        'val_loss': tot_loss/(n-loss_count),
     }
 
     # Metrics
@@ -261,7 +269,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
 
 def run():
 
-    run_name = 'OF_train_{}'.format(version)
+    run_name = 'train_{}'.format(version)
     wandb.init(name=run_name, project="Street Segmentation", dir='/content/wandb/')
     wandb.watch(model, log='all')
     config = wandb.config
@@ -284,21 +292,36 @@ def run():
     config.use_augmentation = use_augmentation
     config.hnm = hnm
     config.loss_weights = loss_weights
+    config.vis_batch = vis_batch
     config.log_interval = 1
+
+    BEST_VAL_LOSS = float('inf')
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
-        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'splits', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['pred'])
+        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
+        
+        # Save checkpoint
+        os.system('rm {}'.format(os.path.join(ckpt_dir, 'latest*')))
+        torch.save(model.state_dict(), os.path.join(ckpt_dir, 'latest_{}.pth'.format(epoch)))
+        if logg_val['val_loss']<BEST_VAL_LOSS:
+            BEST_VAL_LOSS = logg_val['val_loss']
+            os.system('rm {}'.format(os.path.join(ckpt_dir, 'best*')))
+            torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
+
+        # Apply scheduler
         if scheduler:
             if epoch>5:
                 # Apply lr scheduler if training loss isn't decreasing since last 4 epochs
                 if train_losses[-1]>=train_losses[-4]:
                     print("applying scheduler")
                     scheduler.step()
+
+        # Logg results on wandb
         logg = {}
         logg.update(logg_train)
-        # logg.update(logg_val)
+        logg.update(logg_val)
         wandb.log(logg)
 
 
