@@ -4,6 +4,57 @@ import pandas as pd
 import seaborn as sn
 from utils.parameters import index2name
 
+
+def listAdd(lists):
+    '''
+        Add corresponding values of list of lists
+    '''
+    res = np.array([0]*len(lists[0]))
+    lists = np.array(lists)
+    for elem in lists:
+        res += elem
+    return res
+
+def dictAdd(ld):
+    '''
+        Add corresponding keys of list of dicts
+        no matter how nested the dict is
+        Args:
+            ld : List of dicts
+        Returns:
+            res : Final dict with added values
+    '''
+    n = len(ld)
+    keys = ld[0].keys()
+    res = {}
+    for key in keys:
+        if isinstance(ld[0][key], dict):
+            res[key] = dictAdd([ld[i][key] for i in range(n)])
+        elif isinstance(ld[0][key], list):
+            res[key] = listAdd([ld[i][key] for i in range(n)])
+        else:
+            res[key] = sum([ld[i][key] for i in range(n)])
+    return res
+
+def dictRatio(d1, d2):
+    '''
+        Remember d1/d2 , not the other way around
+        in case any key is not found in d2, the d1 value will be kept in res
+    '''
+    keys = d1.keys()
+    res = {}
+    for key in keys:
+        if not key in d2.keys():
+            res[key] = d1[key]
+        elif isinstance(d1[key], dict):
+            res[key] = dictRatio(d1[key], d2[key])
+        elif isinstance(d1[key], list):
+            res[key] = np.array(d1[key])/np.array(d2[key])
+        else:
+            res[key] = d1[key]/d2[key] if d2[key]!=0 else 0
+    return res
+
+
 def conf_operations(conf, ret_type=None, debug=False, i2n=index2name):
     '''
         Args:

@@ -9,20 +9,35 @@ from collections import defaultdict
 
 from metrics.pred import predict
 from utils.parameters import index2name
-from .utils import conf_operations
+from .utils import conf_operations, dictAdd, dictRatio
 
 
-def pixelAccuracy(img1, img2):
+
+def bakeWeight(metrics_arr, weights_arr):
+    '''
+        Apply weights of different metrics & return final metrics
+    '''
+    tot_metrics = dictAdd(metrics_arr)
+    tot_weights = dictAdd(weights_arr)
+    metrics = dictRatio(tot_metrics, tot_weights)
+    return metrics
+
+
+
+def pixelAccuracy(img1, img2, get_weights=False):
     '''
         Calculates pixelwise accuracy between two images
     '''
 
     n = np.prod(img1.shape)
     n_match = n-np.count_nonzero(img1-img2)
+    if get_weights:
+        return n_match/n, n
     return n_match/n
 
 
-def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=False, i2n=index2name):
+def pixelConfusion(img1, img2, mode='val', 
+    splits=False, heatmap=None, debug=False, i2n=index2name, get_weights=False):
     '''
         Calculates pixelwise confusion matrix between 2 images
         Args:
@@ -40,6 +55,10 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
     prec, rec, acc = defaultdict(float), defaultdict(float), defaultdict(float)
     if splits:
         ret_dict = {}
+        if get_weights:
+            ret_dict_weights = {}
+            prec_weights, rec_weights, acc_weights = defaultdict(float), defaultdict(float), defaultdict(float)
+
         tot = np.prod(img1.shape)
         for key in conf.keys():
             tp_ = conf[key][key]
@@ -55,6 +74,11 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
             prec['{}_prec_{}'.format(mode, key)] = tp_/(tp_+fp_) if (tp_+fp_)>0 else 0
             rec['{}_rec_{}'.format(mode, key)] = tp_/(tp_+fn_) if (tp_+fn_)>0 else 0
             acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/tot if tot>0 else 0
+
+            if get_weights:
+                prec_weights['{}_prec_{}'.format(mode, key)] = (tp_+fp_) if (tp_+fp_)>0 else 0
+                rec_weights['{}_rec_{}'.format(mode, key)] = (tp_+fn_) if (tp_+fn_)>0 else 0
+                acc_weights['{}_acc_{}'.format(mode, key)] = tot if tot>0 else 0
 
 
     if heatmap:
@@ -74,12 +98,16 @@ def pixelConfusion(img1, img2, mode='val', splits=False, heatmap=None, debug=Fal
         ret_dict.update(prec)
         ret_dict.update(rec)
         ret_dict.update(acc)
-        return conf, ret_dict
+        if get_weights:
+            ret_dict_weights.update(prec_weights)
+            ret_dict_weights.update(rec_weights)
+            ret_dict_weights.update(acc_weights)
+        return conf, (ret_dict, ret_dict_weights)
 
     return conf
 
 
-def getProbabilityConf(y, y_pred, is_softmax=False, ret_type=None, i2n=index2name):
+def getProbabilityConf(y, y_pred, is_softmax=False, ret_type=None, i2n=index2name, get_weights=False):
     '''
         Gives confusion matrix that shows average probability of one class being predicted as same/different class
         Args:
@@ -96,49 +124,88 @@ def getProbabilityConf(y, y_pred, is_softmax=False, ret_type=None, i2n=index2nam
         y_pred = torch.nn.Softmax(dim=1)(y_pred)
 
     conf = defaultdict(dict)
+    if get_weights:
+        weight = defaultdict(dict)
 
     for (key1, val1) in i2n.items():
+
         y_gt_mask = y==key1
         for (key2, val2) in i2n.items():
-            y_pred_val = y_pred[:, key2, :, :][y_gt_mask]
-            avg_prob = np.mean(y_pred_val.numpy())
+            y_pred_val = (y_pred[:, key2, :, :][y_gt_mask]).numpy()
+            avg_prob = np.mean(y_pred_val)
             conf[val1][val2] = avg_prob
+            if get_weights:
+                weight[val1][val2] = np.prod(y_pred_val.shape)
 
     if ret_type is not None:
         conf = conf_operations(conf, ret_type=ret_type, debug=False, i2n=i2n)
 
+    if get_weights:
+        return conf, weight
     return conf
 
 
 
-def gatherMetrics(params, metrics=['acc'], mode='val', debug=False, i2n=index2name):
+def gatherMetrics(params, metrics=['acc'], 
+    mode='val', debug=False, i2n=index2name, get_weights=False):
 
     mask, y_pred = params
+    if isinstance(y_pred, list):
+        y_pred = torch.cat(y_pred, dim=0)
+    if isinstance(mask, list):
+        mask = torch.cat(mask, dim=0)
+
     y_pred = torch.nn.Softmax(dim=1)(y_pred)
     mask_pred = predict(None, None, use_cache=True, params=(y_pred, True))
 
     logg = {}
+    if get_weights:
+        weights = {}
 
     if 'acc' in metrics:
-        logg['{}_acc'.format(mode)] = pixelAccuracy(mask, mask_pred)
+        acc = pixelAccuracy(mask, mask_pred, get_weights=get_weights)
+        if get_weights:
+            acc, acc_weight = acc
+            weights['{}_acc'.format(mode)] = acc_weight
+        logg['{}_acc'.format(mode)] = acc
+
+    if 'prob_conf' in metrics:
+        prob_conf = getProbabilityConf(
+            mask, y_pred, is_softmax=True, 
+            ret_type=None, i2n=i2n, get_weights=get_weights
+        )
+        if get_weights:
+            prob_conf, prob_conf_weight = prob_conf
+            weights['{}_prob_conf'.format(mode)] = prob_conf_weight
+        logg['{}_prob_conf'.format(mode)] = prob_conf
 
     if 'conf' in metrics:
-        if mode=='eval':
+        if get_weights:
+            heatmap = None
+        elif mode=='eval':
             heatmap = True
         else:
             heatmap = 'image'
 
-        splits = False
         if 'splits' in metrics:
-            conf, ret_dict = pixelConfusion(mask, mask_pred, mode=mode, splits=True, heatmap=heatmap, debug=debug, i2n=i2n)
+            conf, ret_dict = pixelConfusion(
+                mask, mask_pred, mode=mode, 
+                splits=True, heatmap=heatmap, debug=debug, i2n=i2n, get_weights=get_weights,
+            )
+            if get_weights:
+                ret_dict, ret_dict_weights = ret_dict
+                weights.update(ret_dict_weights)
             logg.update(ret_dict)
         else:
-            conf = pixelConfusion(mask, mask_pred, mode=mode, splits=False, heatmap=heatmap, debug=debug, i2n=i2n)
+            conf = pixelConfusion(
+                mask, mask_pred, mode=mode, 
+                splits=False, heatmap=heatmap, debug=debug, i2n=i2n,
+            )
 
         logg['{}_conf'.format(mode)] = conf
 
-    if 'prob_conf' in metrics:
-        prob_conf = getProbabilityConf(mask, y_pred, is_softmax=True, ret_type='image', i2n=i2n)
-        logg['{}_prob_conf'.format(mode)] = prob_conf
+
+    if get_weights:
+        return logg, weights
 
     return logg

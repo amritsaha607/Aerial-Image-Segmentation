@@ -30,9 +30,9 @@ def makeAnnotations(splits=[0.75, 0.2, 0.05],
     val_mask_paths = [img.replace(image_key, mask_key) for img in val_image_paths]
     test_mask_paths = [img.replace(image_key, mask_key) for img in test_image_paths]
 
-    writeAnnot(train_image_paths, train_mask_paths, outfile='../assets/train_sample.txt')
-    writeAnnot(val_image_paths, val_mask_paths, outfile='../assets/val_sample.txt')
-    writeAnnot(test_image_paths, test_mask_paths, outfile='../assets/test_sample.txt')
+    writeAnnot(train_image_paths, train_mask_paths, outfile='../assets/train.txt')
+    writeAnnot(val_image_paths, val_mask_paths, outfile='../assets/val.txt')
+    writeAnnot(test_image_paths, test_mask_paths, outfile='../assets/test.txt')
 
 
 

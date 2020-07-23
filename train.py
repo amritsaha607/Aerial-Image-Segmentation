@@ -24,6 +24,8 @@ from metrics.pred import predict, getMask
 from utils.vis import showPredictions
 from utils.decorators import timer
 from utils.parameters import *
+from metrics.metrics import bakeWeight
+from metrics.utils import conf_operations
 
 
 parser = argparse.ArgumentParser()
@@ -61,6 +63,7 @@ amsgrad = all_configs['amsgrad']
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
 vis_batch = all_configs['vis_batch'] if ('vis_batch' in all_configs) else None 
+metric_batch = all_configs['metric_batch'] if ('metric_batch' in all_configs) else None
 use_augmentation = all_configs['use_augmentation']
 loss_weights, hnm = None, None
 
@@ -125,13 +128,13 @@ n_batch = vis_batch
 pred_fig_indices = list(range(0, len(val_loader)-1))
 random.shuffle(pred_fig_indices)
 pred_fig_indices = pred_fig_indices[:n_batch]
-
+print("pred_fig_indices : ", pred_fig_indices)
 
 @timer
 def train(epoch, loader, optimizer, metrics=[]):
     n = len(loader)
     tot_loss, loss_count = 0.0, 0
-    masks, mask_preds = [], []
+    masks = []
     y_preds = []
     if 'pred' in metrics:
         vis_img, vis_mask, vis_y_pred = [], [], []
@@ -169,7 +172,7 @@ def train(epoch, loader, optimizer, metrics=[]):
 
     print("\n")
     logg = {
-        'training_loss': tot_loss/(n-loss_count),
+        'training_loss': tot_loss/loss_count,
     }
 
     # Metrics
@@ -204,10 +207,12 @@ def train(epoch, loader, optimizer, metrics=[]):
 def validate(epoch, loader, optimizer, metrics=[]):
     n = len(loader)
     tot_loss, loss_count = 0.0, 0
-    masks, mask_preds = [], []
+    masks = []
     y_preds = []
     if 'pred' in metrics:
         vis_img, vis_mask, vis_y_pred = [], [], []
+    if metric_batch is not None:
+        metrics_arr, weights_arr = [], []
 
     model.eval()
     for batch_idx, (_, _, image, mask) in enumerate(loader):
@@ -228,6 +233,19 @@ def validate(epoch, loader, optimizer, metrics=[]):
                 vis_mask.append(mask)
                 vis_y_pred.append(y_pred)
 
+        if (metric_batch is not None) and (1+batch_idx)%metric_batch==0 or (1+batch_idx)==n:
+            logg_metrics, weights = gatherMetrics(
+                params=(masks, y_preds),
+                metrics=metrics,
+                mode='val',
+                i2n=index2name,
+                get_weights=True,
+            )
+            metrics_arr.append(logg_metrics)
+            weights_arr.append(weights)
+
+            y_preds, masks = [], []
+
         n_arr = (50*(batch_idx+1))//n
         progress = 'Validation : [{}>{}] ({}/{}) loss : {:.4f}, avg_loss : {:.4f}'.format(
             '='*n_arr, '-'*(50-n_arr), (batch_idx+1), n, loss.item(), tot_loss/(batch_idx+1))
@@ -237,18 +255,31 @@ def validate(epoch, loader, optimizer, metrics=[]):
 
     print("\n")
     logg = {
-        'val_loss': tot_loss/(n-loss_count),
+        'val_loss': tot_loss/loss_count,
     }
 
     # Metrics
-    masks = torch.cat(masks, dim=0)
-    y_preds = torch.cat(y_preds, dim=0)
-    logg_metrics = gatherMetrics(
-        params=(masks, y_preds),
-        metrics=metrics,
-        mode='val',
-        i2n=index2name,
-    )
+    if metric_batch is not None:
+        # Calculate metrics from fly array
+        logg_metrics = bakeWeight(metrics_arr, weights_arr)
+        logg_metrics['val_conf'] = conf_operations(
+            logg_metrics['val_conf'], 
+            ret_type='image', debug=False, i2n=index2name,
+        )
+        logg_metrics['val_prob_conf'] = conf_operations(
+            logg_metrics['val_prob_conf'], 
+            ret_type='image', debug=False, i2n=index2name,
+        )
+
+    else:
+        masks = torch.cat(masks, dim=0)
+        y_preds = torch.cat(y_preds, dim=0)
+        logg_metrics = gatherMetrics(
+            params=(masks, y_preds),
+            metrics=metrics,
+            mode='val',
+            i2n=index2name,
+        )
     logg.update(logg_metrics)
 
     # Visualizations

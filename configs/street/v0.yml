@@ -1,4 +1,4 @@
-# From oevrfit street v9
+# From oevrfit street v9 (lr=1e-5)
 
 random_seed: 0
 
@@ -14,7 +14,7 @@ val_annot: 'assets/val.txt'
 n_segment_layers: 6
 
 optimizer: 'adam'
-lr: 1e-4
+lr: 1e-5
 weight_decay: 1e-4
 adam_eps: 0
 amsgrad: True
@@ -24,5 +24,8 @@ hnm: 2
 # scheduler: 0.98
 
 CHCEKPOINT_DIR: 'checkpoints/'
+
+vis_batch: 4
+metric_batch: 20
 
 use_augmentation: False
