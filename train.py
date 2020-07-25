@@ -18,6 +18,7 @@ from data.transforms import transform
 from data.collate import collate
 from torch.utils.data import DataLoader
 from models.model import SegmentModel
+from models.unet import UNet
 from models.utils.loss import PixelLoss
 from metrics.metrics import pixelAccuracy, gatherMetrics
 from metrics.pred import predict, getMask
@@ -54,14 +55,24 @@ if num_classes==2:
 n_epoch = int(all_configs['n_epoch'])
 train_annot = all_configs['train_annot']
 val_annot = all_configs['val_annot']
-n_segment_layers = all_configs['n_segment_layers']
+
+H = all_configs['H'] if 'H' in all_configs else 2048
+W = all_configs['W'] if 'W' in all_configs else 2048
+
+model = all_configs['model'] if 'model' in all_configs else None
+n_segment_layers = all_configs['n_segment_layers'] if 'n_segment_layers' in all_configs else None
+tail = all_configs['tail'] if 'tail' in all_configs else None
+pretrained = all_configs['pretrained'] if 'pretrained' in all_configs else None
+
 optimizer = all_configs['optimizer']
 lr = float(all_configs['lr'])
 weight_decay = float(all_configs['weight_decay'])
 adam_eps = float(all_configs['adam_eps'])
 amsgrad = all_configs['amsgrad']
+
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
+
 vis_batch = all_configs['vis_batch'] if ('vis_batch' in all_configs) else None 
 metric_batch = all_configs['metric_batch'] if ('metric_batch' in all_configs) else None
 use_augmentation = all_configs['use_augmentation']
@@ -82,9 +93,14 @@ np.random.seed(random_seed)
 torch.manual_seed(random_seed)
 torch.cuda.manual_seed(random_seed)
 
-
-model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
+if model=='unet':
+    model = UNet(n_channels=3, n_classes=num_classes).cuda()
+else:
+    model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
 criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights, hnm=hnm)
+
+# continue_from = 2
+# model.load_state_dict(torch.load(os.path.join(ckpt_dir, 'latest_{}.pth'.format(2))))
 
 if optimizer=='adam':
     optimizer = torch.optim.Adam(
@@ -102,7 +118,7 @@ if 'scheduler' in all_configs:
 train_set = SegmentDataset(
     annot=train_annot, 
     transform=transform, 
-    dim=(2048, 2048), 
+    dim=(H, W), 
     c2i=color2index
 )
 train_loader = DataLoader(
@@ -114,7 +130,7 @@ train_loader = DataLoader(
 val_set = SegmentDataset(
     annot=val_annot, 
     transform=transform, 
-    dim=(2048, 2048), 
+    dim=(H, W), 
     c2i=color2index
 )
 val_loader = DataLoader(
@@ -165,7 +181,7 @@ def train(epoch, loader, optimizer, metrics=[]):
 
         n_arr = (50*(batch_idx+1))//n
         progress = 'Training : [{}>{}] ({}/{}) loss : {:.4f}, avg_loss : {:.4f}'.format(
-            '='*n_arr, '-'*(50-n_arr), (batch_idx+1), n, loss.item(), tot_loss/(batch_idx+1))
+            '='*n_arr, '-'*(50-n_arr), (batch_idx+1), n, loss.item(), tot_loss/loss_count)
         # if 'acc' in metrics:
         #     progress = '{}, acc : {:.4f}, avg_acc : {:.4f}'.format(progress, acc, tot_acc/(batch_idx+1))
         print(progress, end='\r')
@@ -185,6 +201,11 @@ def train(epoch, loader, optimizer, metrics=[]):
             mode='train',
             i2n=index2name,
         )
+        if 'train_prob_conf' in logg_metrics:
+            logg_metrics['train_prob_conf'] = conf_operations(
+                logg_metrics['train_prob_conf'], 
+                ret_type='image', debug=False, i2n=index2name,
+            )
         logg.update(logg_metrics)
 
     # Visualizations
@@ -248,7 +269,7 @@ def validate(epoch, loader, optimizer, metrics=[]):
 
         n_arr = (50*(batch_idx+1))//n
         progress = 'Validation : [{}>{}] ({}/{}) loss : {:.4f}, avg_loss : {:.4f}'.format(
-            '='*n_arr, '-'*(50-n_arr), (batch_idx+1), n, loss.item(), tot_loss/(batch_idx+1))
+            '='*n_arr, '-'*(50-n_arr), (batch_idx+1), n, loss.item(), tot_loss/loss_count)
         # if 'acc' in metrics:
         #     progress = '{}, acc : {:.4f}, avg_acc : {:.4f}'.format(progress, acc, tot_acc/(batch_idx+1))
         print(progress, end='\r')
@@ -330,16 +351,16 @@ def run():
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['pred'])
-        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['pred', 'acc', 'prob_conf', 'splits', 'conf'])
+        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
         
-        # Save checkpoint
-        os.system('rm {}'.format(os.path.join(ckpt_dir, 'latest*')))
-        torch.save(model.state_dict(), os.path.join(ckpt_dir, 'latest_{}.pth'.format(epoch)))
-        if logg_val['val_loss']<BEST_VAL_LOSS:
-            BEST_VAL_LOSS = logg_val['val_loss']
-            os.system('rm {}'.format(os.path.join(ckpt_dir, 'best*')))
-            torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
+        # # Save checkpoint
+        # os.system('rm {}'.format(os.path.join(ckpt_dir, 'latest*')))
+        # torch.save(model.state_dict(), os.path.join(ckpt_dir, 'latest_{}.pth'.format(epoch)))
+        # if logg_val['val_loss']<BEST_VAL_LOSS:
+        #     BEST_VAL_LOSS = logg_val['val_loss']
+        #     os.system('rm {}'.format(os.path.join(ckpt_dir, 'best*')))
+        #     torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
 
         # Apply scheduler
         if scheduler:
@@ -352,7 +373,7 @@ def run():
         # Logg results on wandb
         logg = {}
         logg.update(logg_train)
-        logg.update(logg_val)
+        # logg.update(logg_val)
         wandb.log(logg)
 
 

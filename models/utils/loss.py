@@ -22,7 +22,10 @@ class PixelLoss(nn.Module):
 			y 		: batch, 1, h, w
 		'''
 
+		eps = 1e-6
+
 		y_pred = y_pred.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes)
+		y_pred += eps
 		y = y.view(-1)
 
 		if self.hnm is not None:

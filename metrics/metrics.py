@@ -17,7 +17,7 @@ def bakeWeight(metrics_arr, weights_arr):
     '''
         Apply weights of different metrics & return final metrics
     '''
-    tot_metrics = dictAdd(metrics_arr)
+    tot_metrics = dictAdd(metrics_arr, weights=weights_arr)
     tot_weights = dictAdd(weights_arr)
     metrics = dictRatio(tot_metrics, tot_weights)
     return metrics
@@ -71,13 +71,19 @@ def pixelConfusion(img1, img2, mode='val',
             fn['{}_fn_{}'.format(mode, key)] = fn_
             tn['{}_tn_{}'.format(mode, key)] = tn_
 
-            prec['{}_prec_{}'.format(mode, key)] = tp_/(tp_+fp_) if (tp_+fp_)>0 else 0
-            rec['{}_rec_{}'.format(mode, key)] = tp_/(tp_+fn_) if (tp_+fn_)>0 else 0
+            prec_ = tp_/(tp_+fp_) if (tp_+fp_)>0 else 0
+            rec_ = tp_/(tp_+fn_) if (tp_+fn_)>0 else 0
+            f1_den = (tp_+(fp_+fn_)/2)
+
+            prec['{}_prec_{}'.format(mode, key)] = prec_
+            rec['{}_rec_{}'.format(mode, key)] = rec_
+            f1['{}_F1_{}'.format(mode, key)] = 1/f1_den if f1_den>0 else 0
             acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/tot if tot>0 else 0
 
             if get_weights:
                 prec_weights['{}_prec_{}'.format(mode, key)] = (tp_+fp_) if (tp_+fp_)>0 else 0
                 rec_weights['{}_rec_{}'.format(mode, key)] = (tp_+fn_) if (tp_+fn_)>0 else 0
+                f1_weights['{}_F1_{}'].format(mode, key) = f1_den if f1_den>0 else 0
                 acc_weights['{}_acc_{}'.format(mode, key)] = tot if tot>0 else 0
 
 
@@ -97,12 +103,15 @@ def pixelConfusion(img1, img2, mode='val',
     if splits:
         ret_dict.update(prec)
         ret_dict.update(rec)
+        ret_dict.update(f1)
         ret_dict.update(acc)
         if get_weights:
             ret_dict_weights.update(prec_weights)
             ret_dict_weights.update(rec_weights)
+            ret_dict_weights.update(f1_weights)
             ret_dict_weights.update(acc_weights)
-        return conf, (ret_dict, ret_dict_weights)
+            return conf, (ret_dict, ret_dict_weights)
+        return conf, ret_dict
 
     return conf
 

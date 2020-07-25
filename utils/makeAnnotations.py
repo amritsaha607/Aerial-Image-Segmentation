@@ -10,10 +10,12 @@ def writeAnnot(images, masks, outfile='../assets/sample.txt'):
     f.close()
 
 def makeAnnotations(splits=[0.75, 0.2, 0.05], 
-    src='/content/data/', image_key='image.png', mask_key='labels.png', random_state=0):
+    src='/content/data/', image_key='image.png', mask_key='labels.png', out_mode='', random_state=0):
 
     random.seed(random_state)
     all_paths = glob.glob(os.path.join(src, '**', '*.png'))
+    if out_mode=='sample':
+        all_paths = glob.glob(os.path.join(src, '*.png'))
     image_paths = [img for img in all_paths if img.__contains__(image_key)]
     shuffle(image_paths)
 
@@ -30,9 +32,21 @@ def makeAnnotations(splits=[0.75, 0.2, 0.05],
     val_mask_paths = [img.replace(image_key, mask_key) for img in val_image_paths]
     test_mask_paths = [img.replace(image_key, mask_key) for img in test_image_paths]
 
-    writeAnnot(train_image_paths, train_mask_paths, outfile='../assets/train.txt')
-    writeAnnot(val_image_paths, val_mask_paths, outfile='../assets/val.txt')
-    writeAnnot(test_image_paths, test_mask_paths, outfile='../assets/test.txt')
+    outfile = {
+        'train': '../assets/train.txt',
+        'val': '../assets/val.txt',
+        'test': '../assets/test.txt',
+    }
+    if out_mode=='sample':
+        outfile = {
+            'train': '../assets/train_sample.txt',
+            'val': '../assets/val_sample.txt',
+            'test': '../assets/test_sample.txt',
+        }
+
+    writeAnnot(train_image_paths, train_mask_paths, outfile=outfile['train'])
+    writeAnnot(val_image_paths, val_mask_paths, outfile=outfile['val'])
+    writeAnnot(test_image_paths, test_mask_paths, outfile=outfile['test'])
 
 
 
@@ -50,10 +64,17 @@ def makeSmallAnnot():
     createSmall(f_in='../assets/val.txt', f_out='../assets/val_100.txt')
     createSmall(f_in='../assets/test.txt', f_out='../assets/test_100.txt')
     
+# makeAnnotations(
+#     splits=[0.75, 0.2, 0.05], 
+#     src='/content/data/', 
+#     image_key='image.png', mask_key='labels.png', 
+#     random_state=0
+# )
 makeAnnotations(
     splits=[0.75, 0.2, 0.05], 
-    src='/content/data/', 
+    src='/content/data/potsdam/', 
     image_key='image.png', mask_key='labels.png', 
+    out_mode='sample',
     random_state=0
 )
 # makeAnnotations()
