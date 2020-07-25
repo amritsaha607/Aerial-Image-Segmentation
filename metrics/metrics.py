@@ -83,7 +83,7 @@ def pixelConfusion(img1, img2, mode='val',
             if get_weights:
                 prec_weights['{}_prec_{}'.format(mode, key)] = (tp_+fp_) if (tp_+fp_)>0 else 0
                 rec_weights['{}_rec_{}'.format(mode, key)] = (tp_+fn_) if (tp_+fn_)>0 else 0
-                f1_weights['{}_F1_{}'].format(mode, key) = f1_den if f1_den>0 else 0
+                f1_weights['{}_F1_{}'.format(mode, key)] = f1_den if f1_den>0 else 0
                 acc_weights['{}_acc_{}'.format(mode, key)] = tot if tot>0 else 0
 
 
