@@ -52,12 +52,12 @@ def pixelConfusion(img1, img2, mode='val',
         conf[val1] = {val2: np.count_nonzero(mask1 & (img2==key2)) for key2, val2 in i2n.items()}
 
     tp, fp, tn, fn = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
-    prec, rec, acc = defaultdict(float), defaultdict(float), defaultdict(float)
+    prec, rec, f1, acc = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
     if splits:
         ret_dict = {}
         if get_weights:
             ret_dict_weights = {}
-            prec_weights, rec_weights, acc_weights = defaultdict(float), defaultdict(float), defaultdict(float)
+            prec_weights, rec_weights, f1_weights, acc_weights = defaultdict(float), defaultdict(float), defaultdict(float), defaultdict(float)
 
         tot = np.prod(img1.shape)
         for key in conf.keys():
@@ -77,7 +77,7 @@ def pixelConfusion(img1, img2, mode='val',
 
             prec['{}_prec_{}'.format(mode, key)] = prec_
             rec['{}_rec_{}'.format(mode, key)] = rec_
-            f1['{}_F1_{}'.format(mode, key)] = 1/f1_den if f1_den>0 else 0
+            f1['{}_F1_{}'.format(mode, key)] = tp_/f1_den if f1_den>0 else 0
             acc['{}_acc_{}'.format(mode, key)] = (tp_+tn_)/tot if tot>0 else 0
 
             if get_weights:
