@@ -25,6 +25,8 @@ hnm: 2
 loss_weights: [1, 1]
 # scheduler: 0.98
 
+metric_batch: 20
+
 CHCEKPOINT_DIR: 'checkpoints/'
 
 use_augmentation: False
