@@ -73,7 +73,7 @@ amsgrad = all_configs['amsgrad']
 CHCEKPOINT_DIR = all_configs['CHCEKPOINT_DIR']
 ckpt_dir = os.path.join(CHCEKPOINT_DIR, version)
 
-vis_batch = all_configs['vis_batch'] if ('vis_batch' in all_configs) else None 
+vis_batch = all_configs['vis_batch'] if ('vis_batch' in all_configs) else 4 
 metric_batch = all_configs['metric_batch'] if ('metric_batch' in all_configs) else None
 use_augmentation = all_configs['use_augmentation']
 loss_weights, hnm = None, None
