@@ -351,29 +351,29 @@ def run():
 
     for epoch in range(1, n_epoch+1):
         print("Epoch {}".format(epoch))
-        logg_train = train(epoch, train_loader, optimizer, metrics=['pred', 'acc', 'prob_conf', 'splits', 'conf'])
-        # logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
+        logg_train = train(epoch, train_loader, optimizer, metrics=['pred'])
+        logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
         
-        # # Save checkpoint
-        # os.system('rm {}'.format(os.path.join(ckpt_dir, 'latest*')))
-        # torch.save(model.state_dict(), os.path.join(ckpt_dir, 'latest_{}.pth'.format(epoch)))
-        # if logg_val['val_loss']<BEST_VAL_LOSS:
-        #     BEST_VAL_LOSS = logg_val['val_loss']
-        #     os.system('rm {}'.format(os.path.join(ckpt_dir, 'best*')))
-        #     torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
+        # Save checkpoint
+        os.system('rm {}'.format(os.path.join(ckpt_dir, 'latest*')))
+        torch.save(model.state_dict(), os.path.join(ckpt_dir, 'latest_{}.pth'.format(epoch)))
+        if logg_val['val_loss']<BEST_VAL_LOSS:
+            BEST_VAL_LOSS = logg_val['val_loss']
+            os.system('rm {}'.format(os.path.join(ckpt_dir, 'best*')))
+            torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
 
         # Apply scheduler
-        if scheduler:
-            if epoch>5:
-                # Apply lr scheduler if training loss isn't decreasing since last 4 epochs
-                if train_losses[-1]>=train_losses[-4]:
-                    print("applying scheduler")
-                    scheduler.step()
+        # if scheduler:
+        #     if epoch>5:
+        #         # Apply lr scheduler if training loss isn't decreasing since last 4 epochs
+        #         if train_losses[-1]>=train_losses[-4]:
+        #             print("applying scheduler")
+        #             scheduler.step()
 
         # Logg results on wandb
         logg = {}
         logg.update(logg_train)
-        # logg.update(logg_val)
+        logg.update(logg_val)
         wandb.log(logg)
 
 
