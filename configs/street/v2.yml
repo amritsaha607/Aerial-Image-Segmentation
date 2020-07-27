@@ -1,8 +1,8 @@
-# v1 with weight decay : 1e-2,  batch_s : 2
+# v1 with weight decay : 1e-2
 
 random_seed: 0
 
-batch_size: 2
+batch_size: 1
 num_classes: 2
 ftr: 'Street'
 n_epoch: 500
