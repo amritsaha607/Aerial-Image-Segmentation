@@ -31,12 +31,16 @@ from metrics.utils import conf_operations
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--version', type=str, default='v0', help='Version of experiment')
+parser.add_argument('--cont', type=int, default=None, help='to continue training from a specific epoch')
+parser.add_argument('--wid', type=str, default=None, help='For continuing runs, provide the id of wandb run')
 args = parser.parse_args()
 
 version = args.version
+cont = args.cont
+wid = args.wid
+
 cfg_path = 'configs/{}.yml'.format(version.replace('_', '/').replace('-', '/'))
 all_configs = yaml.safe_load(open(cfg_path))
-
 
 random_seed = int(all_configs['random_seed'])
 batch_size = int(all_configs['batch_size'])
@@ -99,8 +103,9 @@ else:
     model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
 criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights, hnm=hnm)
 
-# continue_from = 2
-# model.load_state_dict(torch.load(os.path.join(ckpt_dir, 'latest_{}.pth'.format(2))))
+if cont is not None:
+    cont = int(cont)
+    model.load_state_dict(torch.load(os.path.join(ckpt_dir, 'latest_{}.pth'.format(cont))))
 
 if optimizer=='adam':
     optimizer = torch.optim.Adam(
@@ -322,7 +327,10 @@ def validate(epoch, loader, optimizer, metrics=[]):
 def run():
 
     run_name = 'train_{}'.format(version)
-    wandb.init(name=run_name, project="Street Segmentation", dir='/content/wandb/')
+    if cont is not None:
+        wandb.init(id=wid, name=run_name, project="Street Segmentation", dir='/content/wandb/', resume=True)
+    else:
+        wandb.init(name=run_name, project="Street Segmentation", dir='/content/wandb/')
     wandb.watch(model, log='all')
     config = wandb.config
 
@@ -349,7 +357,8 @@ def run():
 
     BEST_VAL_LOSS = float('inf')
 
-    for epoch in range(1, n_epoch+1):
+    epoch_start = (cont+1) if cont is not None else 1
+    for epoch in range(epoch_start, n_epoch+1):
         print("Epoch {}".format(epoch))
         logg_train = train(epoch, train_loader, optimizer, metrics=['pred'])
         logg_val = validate(epoch, val_loader, optimizer, metrics=['acc', 'conf', 'prob_conf', 'splits', 'pred'])
