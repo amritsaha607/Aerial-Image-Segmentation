@@ -35,7 +35,7 @@ parser.add_argument('--cont', type=int, default=None, help='to continue training
 parser.add_argument('--wid', type=str, default=None, help='For continuing runs, provide the id of wandb run')
 parser.add_argument(
     '--BEST_VAL_LOSS', 
-    type=float, default=1.0, 
+    type=float, default=None, 
     help="For continuing runs, provide the best loss that you've found till now",
 )
 args = parser.parse_args()
@@ -360,7 +360,9 @@ def run():
     config.vis_batch = vis_batch
     config.log_interval = 1
 
-    BEST_VAL_LOSS = all_configs['BEST_VAL_LOSS'] if 'BEST_VAL_LOSS' in all_configs else float('inf')
+    if cont:
+        BEST_VAL_LOSS = float(args.BEST_VAL_LOSS) if args.BEST_VAL_LOSS is not None else float('inf')
+    print("BEST_VAL_LOSS : ", BEST_VAL_LOSS)
 
     epoch_start = (cont+1) if cont is not None else 1
     for epoch in range(epoch_start, n_epoch+1):
