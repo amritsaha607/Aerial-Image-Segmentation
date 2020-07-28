@@ -36,3 +36,8 @@ color2index_building = {
 }
 
 COLORS = ['white', 'green', 'red']
+COLORS_OVERLAY = [
+	(255, 255, 255, 0.0), 	# white with transparency 0
+	(0, 255, 0, 1.0), 		# Green
+	(255, 0, 0, 1.0), 		# Red
+]
