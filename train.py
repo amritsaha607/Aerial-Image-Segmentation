@@ -33,6 +33,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--version', type=str, default='v0', help='Version of experiment')
 parser.add_argument('--cont', type=int, default=None, help='to continue training from a specific epoch')
 parser.add_argument('--wid', type=str, default=None, help='For continuing runs, provide the id of wandb run')
+parser.add_argument(
+    '--BEST_VAL_LOSS', 
+    type=float, default=1.0, 
+    help="For continuing runs, provide the best loss that you've found till now",
+)
 args = parser.parse_args()
 
 version = args.version
@@ -355,7 +360,7 @@ def run():
     config.vis_batch = vis_batch
     config.log_interval = 1
 
-    BEST_VAL_LOSS = float('inf')
+    BEST_VAL_LOSS = all_configs['BEST_VAL_LOSS'] if 'BEST_VAL_LOSS' in all_configs else float('inf')
 
     epoch_start = (cont+1) if cont is not None else 1
     for epoch in range(epoch_start, n_epoch+1):
