@@ -1,29 +1,60 @@
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib
-from utils.parameters import COLORS
+from utils.parameters import COLORS, COLORS_OVERLAY
 
-def showImageMask(img, mask, use_path=True, debug=False):
-
+def overlayPlot(img, mask, use_path=True, debug=False, size=(8, 8), transparency=0.5):
+    
     if use_path:
+        img = cv2.imread(img)
+        mask = cv2.imread(mask)
+    
+    fig = plt.figure(figsize=size)
+    plt.imshow(img)
+    plt.imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS_OVERLAY), alpha=transparency)
+    plt.axis('off')
+    if debug:
+        plt.show()
+    else:
+        return fig
+        
+def showImageMask(img, mask, use_path=True, debug=False, overlay=False):
+
+    '''
+        Visualizes image and mask simultaneously
+        Args:
+            img : image_path / image array
+            mask : mask_path / mask array
+            use_path : set True for using path
+            debug : set True for debugging in notebook
+            overlay : set True to overlay mask on image 
+                        (better call overlayPlot function to set transperancy parameter)
+    '''
+
+    if use_path and not overlay:
         img_path, mask_path = img.split('/')[-1], mask.split('/')[-1]
         img = cv2.imread(img)
         mask = cv2.imread(mask)
 
-    fig, ax = plt.subplots(1, 2)
-    ax[0].imshow(img)
-    ax[0].axis('off')
-    ax[1].imshow(mask)
-    ax[1].axis('off')
-    if use_path:
-        ax[0].set_title(img_path)
-        ax[1].set_title(mask_path)
+    if not overlay:
+        fig, ax = plt.subplots(1, 2)
+        ax[0].imshow(img)
+        ax[0].axis('off')
+        ax[1].imshow(mask)
+        ax[1].axis('off')
+        if use_path:
+            ax[0].set_title(img_path)
+            ax[1].set_title(mask_path)
 
-    if debug:
-        plt.show()
+        if debug:
+            plt.show()
+        else:
+            plt.close()
+            return fig
+    
     else:
-        plt.close()
-        return fig
+        return overlayPlot(img, mask, use_path=use_path, debug=debug)
+
 
 def multiShowImageMask(imgs, masks, use_path=True, debug=False):
 
