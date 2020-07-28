@@ -81,7 +81,7 @@ def dictRatio(d1, d2):
     return res
 
 
-def conf_operations(conf, ret_type=None, debug=False, i2n=index2name):
+def conf_operations(conf, ret_type=None, debug=False, i2n=index2name, size=(8, 8)):
     '''
         Args:
             conf : confusion matrix (dict of dict)
@@ -96,11 +96,13 @@ def conf_operations(conf, ret_type=None, debug=False, i2n=index2name):
     if ret_type=='image' or ret_type=='plt_fig' or ret_type=='heatmap' or debug:
 
         if ret_type=='heatmap':
+            conf = [list(c.values()) for c in conf.values()]
             conf = wandb.plots.HeatMap(i2n.values(), i2n.values(), conf, show_text=True)
+            return conf
 
         conf = [list(val.values()) for val in conf.values()]
         df_cm = pd.DataFrame(conf, index=i2n.values(), columns=i2n.values())
-        conf = plt.figure(figsize=(8, 8))
+        conf = plt.figure(figsize=size)
         sn.heatmap(df_cm, annot=True)
         plt.close()
 

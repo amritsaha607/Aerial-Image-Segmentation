@@ -1,0 +1,3 @@
+/content/data/chicago/chicago144_image.png	/content/data/chicago/chicago144_labels.png
+/content/data/berlin/berlin167_image.png	/content/data/berlin/berlin167_labels.png
+/content/data/chicago/chicago26_image.png	/content/data/chicago/chicago26_labels.png
