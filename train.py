@@ -360,6 +360,7 @@ def run():
     config.vis_batch = vis_batch
     config.log_interval = 1
 
+    BEST_VAL_LOSS = float('inf')
     if cont:
         BEST_VAL_LOSS = float(args.BEST_VAL_LOSS) if args.BEST_VAL_LOSS is not None else float('inf')
     print("BEST_VAL_LOSS : ", BEST_VAL_LOSS)
