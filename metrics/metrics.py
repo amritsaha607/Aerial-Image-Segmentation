@@ -156,7 +156,7 @@ def getProbabilityConf(y, y_pred, is_softmax=False, ret_type=None, i2n=index2nam
 
 
 def gatherMetrics(params, metrics=['acc'], 
-    mode='val', debug=False, i2n=index2name, get_weights=False):
+    mode='val', debug=False, i2n=index2name, get_weights=False, thres='auto'):
 
     mask, y_pred = params
     if isinstance(y_pred, list):
@@ -165,7 +165,7 @@ def gatherMetrics(params, metrics=['acc'],
         mask = torch.cat(mask, dim=0)
 
     y_pred = torch.nn.Softmax(dim=1)(y_pred)
-    mask_pred = predict(None, None, use_cache=True, params=(y_pred, True))
+    mask_pred = predict(None, None, use_cache=True, params=(y_pred, True), thres=thres)
 
     logg = {}
     if get_weights:

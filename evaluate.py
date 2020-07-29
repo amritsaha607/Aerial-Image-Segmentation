@@ -28,8 +28,11 @@ from eval.utils import evaluate
 parser = argparse.ArgumentParser()
 parser.add_argument('--version', type=str, default='v0', help='Version of experiment')
 parser.add_argument('--ckpt', type=str, default=None, help='checkpoint to be loaded')
-parser.add_argument('--thresholds', type=str, default=None, 
-    help='score thresholds of different classes (write in comma seperated without spaces) [eg : 0.3,0.4,0.3 for 3 classes]')
+parser.add_argument('--thres', type=str, default=None, 
+    help='score thresholds of different classes (write in comma seperated without spaces)\
+     [eg : 0:0.3,2:0.4,1:0.3 for 3 classes] \
+     remember the ordering matters, keep the ordering according to decreasing priority\
+     In the above case, 0 has highest priority, 2 has second highest & 1 has least')
 parser.add_argument('--mode', type=str, default='run', 
     help='Mode of evaluation ("run": Run, "save": save cache predictions, "load": load cached predictions)')
 args = parser.parse_args()
@@ -56,6 +59,7 @@ if num_classes==2:
         raise ValueError("Unknown feature found - {}".format(ftr))
 
 val_annot = all_configs['val_annot']
+# val_annot = 'assets/eval_sample.txt'
 
 H = all_configs['H'] if 'H' in all_configs else 2048
 W = all_configs['W'] if 'W' in all_configs else 2048
@@ -117,8 +121,9 @@ if __name__=='__main__':
 
     # Get thresholds
     thresholds = 'auto'
-    if args.thresholds is not None:
-        thresholds = [float(thres) for thres in args.thresholds.split(',')]
+    if args.thres is not None:
+        thresholds = {int(elem.split(':')[0]): float(elem.split(':')[1]) for elem in args.thres.split(',')}
+        # thresholds = [float(thres) for thres in args.thresholds.split(',')]
 
     if thresholds=='auto':
         run_name = 'eval_{}_{}_{}'.format(version, epoch, thresholds)
@@ -134,6 +139,7 @@ if __name__=='__main__':
     config.thresholds = thresholds
 
     params = {
+        'thres': thresholds,
         'metrics': ['acc', 'conf', 'prob_conf', 'splits', 'pred'],
         'metric_batch': metric_batch,
         'i2n': index2name,

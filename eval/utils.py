@@ -23,6 +23,7 @@ def evaluate(loader, model, params):
     index2name = params['i2n']
     pred_fig_indices = params['pred_fig_indices']
     mode = params['mode']
+    thres = params['thres']
 
     if mode!='run':
         raise ValueError("Sorry :/, only run mode is activated for now")
@@ -57,6 +58,7 @@ def evaluate(loader, model, params):
                 mode='eval',
                 i2n=index2name,
                 get_weights=True,
+                thres=thres,
             )
             metrics_arr.append(logg_metrics)
             weights_arr.append(weights)
@@ -91,6 +93,7 @@ def evaluate(loader, model, params):
             metrics=metrics,
             mode='eval',
             i2n=index2name,
+            thres=thres,
         )
 
     logg.update(logg_metrics)
@@ -100,7 +103,7 @@ def evaluate(loader, model, params):
         vis_img = torch.cat(vis_img, dim=0)
         vis_mask = torch.cat(vis_mask, dim=0)
         vis_y_pred = torch.cat(vis_y_pred, dim=0)
-        vis_mask_pred = predict(None, None, use_cache=True, params=(vis_y_pred, False))
+        vis_mask_pred = predict(None, None, use_cache=True, params=(vis_y_pred, False), thres=thres)
         pred_fig = showPredictions(
             vis_img, vis_mask, vis_mask_pred, 
             use_path=False, ret='fig', debug=False, size='auto',
