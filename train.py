@@ -363,6 +363,10 @@ def run():
     BEST_VAL_LOSS = float('inf')
     if cont:
         BEST_VAL_LOSS = float(args.BEST_VAL_LOSS) if args.BEST_VAL_LOSS is not None else float('inf')
+        if scheduler:
+            print("Setting up scheduler to continuing state...\n")
+            for i in range(cont):
+                scheduler.step()
     print("BEST_VAL_LOSS : ", BEST_VAL_LOSS)
 
     epoch_start = (cont+1) if cont is not None else 1
