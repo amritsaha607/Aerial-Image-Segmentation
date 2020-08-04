@@ -380,7 +380,8 @@ def run():
             torch.save(model.state_dict(), os.path.join(ckpt_dir, 'best_{}.pth'.format(epoch)))
 
         # Apply scheduler
-        # if scheduler:
+        if scheduler:
+            scheduler.step()
         #     if epoch>5:
         #         # Apply lr scheduler if training loss isn't decreasing since last 4 epochs
         #         if train_losses[-1]>=train_losses[-4]:
