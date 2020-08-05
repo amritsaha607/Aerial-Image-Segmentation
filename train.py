@@ -11,6 +11,7 @@ import time
 import math
 import numpy as np
 import torch
+torch.backends.cudnn.benchmark = True
 import torch.nn as nn
 
 from data.dataset import SegmentDataset
