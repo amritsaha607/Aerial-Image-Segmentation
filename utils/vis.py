@@ -8,10 +8,11 @@ def overlayPlot(img, mask, use_path=True, debug=False, size=(8, 8), transparency
     if use_path:
         img = cv2.imread(img)
         mask = cv2.imread(mask)
-    
+
+    COLORS_OVERLAY_RELATIVE = [tuple([x/255. for x in y if x!=y[-1]]+[y[-1]]) for y in COLORS_OVERLAY]
     fig = plt.figure(figsize=size)
     plt.imshow(img)
-    plt.imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS_OVERLAY), alpha=transparency)
+    plt.imshow(mask, vmin=0, vmax=2, cmap=matplotlib.colors.ListedColormap(COLORS_OVERLAY_RELATIVE), alpha=transparency)
     plt.axis('off')
     if debug:
         plt.show()
