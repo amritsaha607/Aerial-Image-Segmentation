@@ -69,6 +69,9 @@ val_annot = all_configs['val_annot']
 H = all_configs['H'] if 'H' in all_configs else 2048
 W = all_configs['W'] if 'W' in all_configs else 2048
 
+split_H = all_configs['split_H'] if 'split_H' in all_configs else None
+split_W = all_configs['split_W'] if 'split_W' in all_configs else None
+
 model = all_configs['model'] if 'model' in all_configs else None
 n_segment_layers = all_configs['n_segment_layers'] if 'n_segment_layers' in all_configs else None
 tail = all_configs['tail'] if 'tail' in all_configs else None
@@ -130,7 +133,8 @@ train_set = SegmentDataset(
     annot=train_annot, 
     transform=transform, 
     dim=(H, W), 
-    c2i=color2index
+    c2i=color2index,
+    split=(split_H, split_W),
 )
 train_loader = DataLoader(
     train_set,
@@ -142,7 +146,8 @@ val_set = SegmentDataset(
     annot=val_annot, 
     transform=transform, 
     dim=(H, W), 
-    c2i=color2index
+    c2i=color2index,
+    split=(split_H, split_W),
 )
 val_loader = DataLoader(
     val_set,

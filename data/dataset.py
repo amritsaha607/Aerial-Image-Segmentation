@@ -13,11 +13,18 @@ from utils.parameters import color2index
 
 class SegmentDataset(Dataset):
 
-    def __init__(self, annot='assets/sample.txt', transform=None, dim=(2048, 2048), c2i=color2index):
+    def __init__(self, annot='assets/sample.txt', 
+        transform=None, dim=(2048, 2048), c2i=color2index, split=(None, None)):
+
+        '''
+            split : size of splitted image (if you wanna split)
+        '''
+
         self.annot = annot
         self.transform = transform
         self.dim = dim
         self.c2i = c2i
+        self.split = split
         if isinstance(self.dim, int):
             self.dim = (dim, dim)
         lines = open(annot, 'r').read().strip().split('\n')
@@ -39,5 +46,8 @@ class SegmentDataset(Dataset):
         if self.transform:
             image, mask = self.transform(image, mask, dim=self.dim)
 
-        return (image_path, mask_path, image, mask)
+        ret = (image_path, mask_path, image, mask)
+        if self.split[0] and self.split[1]:
+            ret = {'split': self.split, 'data': ret}
+        return ret
 
