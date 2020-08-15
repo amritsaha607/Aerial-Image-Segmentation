@@ -4,3 +4,5 @@ wandb/
 
 */__pycache__/*
 */.ipynb_checkpoints/*
+
+debug/predictions/pred_figures/*
