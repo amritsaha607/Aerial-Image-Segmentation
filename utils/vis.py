@@ -17,6 +17,7 @@ def overlayPlot(img, mask, use_path=True, debug=False, size=(8, 8), transparency
     if debug:
         plt.show()
     else:
+        plt.close()
         return fig
         
 def showImageMask(img, mask, use_path=True, debug=False, overlay=False):
