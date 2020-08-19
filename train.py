@@ -108,6 +108,8 @@ torch.cuda.manual_seed(random_seed)
 
 if model=='unet':
     model = UNet(n_channels=3, n_classes=num_classes).cuda()
+elif model=='unet_attention':
+    model = UNet(n_channels=3, n_classes=num_classes, attention=True).cuda()
 else:
     model = SegmentModel(num_features=num_classes, n_layers=n_segment_layers).cuda()
 criterion = PixelLoss(num_classes=num_classes, loss_weights=loss_weights, hnm=hnm)

@@ -13,7 +13,7 @@ class SpatialAttention(nn.Module):
 	def forward(self, x_high, x_low):
 		x = self.conv(x_high)
 		x = self.sigmoid(x)
-		x += x_low
+		x = x+x_low
 		# x = torch.cat([x, x_low], dim=1)
 		x = torch.cat([x_high, x], dim=1)
 		return x
@@ -34,5 +34,5 @@ class ChannelAttention(nn.Module):
 		x_branch = self.avg_pool(x)
 		x_branch = self.relu1(self.fc1(x_branch))
 		x_branch = self.relu2(self.fc2(x_branch))
-		x += x_branch
+		x = x+x_branch
 		return x
