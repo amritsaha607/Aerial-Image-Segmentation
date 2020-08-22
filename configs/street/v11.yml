@@ -16,7 +16,7 @@ W: 512
 model: 'unet_attention'
 
 optimizer: 'adam'
-lr: 1e-3
+lr: 1e-4
 weight_decay: 1e-4
 adam_eps: 0.1
 amsgrad: True
