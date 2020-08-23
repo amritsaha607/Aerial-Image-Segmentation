@@ -1,0 +1,33 @@
+# v9 with increased learning rate
+
+random_seed: 0
+
+batch_size: 4
+num_classes: 2
+ftr: 'Street'
+n_epoch: 500
+
+train_annot: 'assets/train.txt'
+val_annot: 'assets/val.txt'
+
+H: 512
+W: 512
+
+model: 'unet_attention'
+
+optimizer: 'adam'
+
+lr: 1e-3
+weight_decay: 1e-4
+adam_eps: 0.1
+amsgrad: True
+
+hnm: 2
+loss_weights: [1, 1]
+scheduler: 0.98
+vis_batch: 1
+metric_batch: 25
+
+CHCEKPOINT_DIR: 'checkpoints/'
+
+use_augmentation: False
