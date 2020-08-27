@@ -23,6 +23,7 @@ Mainly UNet is used with embedded Spatial and Channel Attention mechanism.
 
 
 > Demo
+
 ![alt text](https://github.com/amritsaha607/Aerial-Image-Segmentation/blob/master/Demo/1.png?raw=true)
 ![alt text](https://github.com/amritsaha607/Aerial-Image-Segmentation/blob/master/Demo/2.png?raw=true)
 ![alt text](https://github.com/amritsaha607/Aerial-Image-Segmentation/blob/master/Demo/4.png?raw=true)
