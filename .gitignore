@@ -1,3 +1,5 @@
+.vscode/
+
 checkpoints/
 wandb/
 */wandb/*

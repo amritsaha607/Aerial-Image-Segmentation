@@ -1,11 +1,7 @@
-import glob
-import os
 from random import shuffle
 import cv2
-import torch
 from torch.utils.data import Dataset
 from PIL import Image
-import numpy as np
 
 from utils.utils import processMask
 from utils.parameters import color2index
@@ -50,4 +46,3 @@ class SegmentDataset(Dataset):
         if self.split[0] and self.split[1]:
             ret = {'split': self.split, 'data': ret}
         return ret
-
