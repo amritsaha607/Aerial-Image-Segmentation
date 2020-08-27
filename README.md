@@ -4,18 +4,20 @@
 ```sh
 $ python3 train.py --version <VERSION_NAME>
 ```
+<br/>
 
 > Public Dataset Used
-
 https://zenodo.org/record/1154821/files/potsdam.zip?download=1 <br/>
 https://zenodo.org/record/1154821/files/berlin.zip?download=1 <br/>
 https://zenodo.org/record/1154821/files/chicago.zip?download=1 <br/>
 https://zenodo.org/record/1154821/files/paris.zip?download=1 <br/>
 https://zenodo.org/record/1154821/files/tokyo.zip?download=1 <br/>
+<br/>
 
 > Model architecture
-
 Mainly UNet is used with embedded Spatial and Channel Attention mechanism.
+<br/>
+
 
 > Demo
 
